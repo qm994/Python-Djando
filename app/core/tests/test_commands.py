@@ -13,6 +13,7 @@ class CommandTests(TestCase):
             gi.return_value = True
             call_command("wait_for_db")
             self.assertEqual(gi.call_count, 1)
+            
     #replace the `time.sleep` with True so there is no need to wait during 5 attempts to connect to db
     @patch('time.sleep', return_value=True)
     def test_wait_for_db(self, ts):
