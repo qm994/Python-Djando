@@ -7,4 +7,5 @@ app_name = 'user' # we can reversly retrive the url by using 'user:create'
 
 urlpatterns = [
     path('create/', views.CreateUserView.as_view(), name='create'),
+    path('token/', views.CreateTokenView.as_view(), name='token'),
 ]
