@@ -6,6 +6,8 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 CREATE_USER_URL = reverse('user:create')
+TOKEN_URL = reverse('user:token')
+
 
 def create_user(**params):
     return get_user_model().objects.create_user(**params)
@@ -65,3 +67,56 @@ class PublicUserApiTests(TestCase):
         ).exists()
 
         self.assertFalse(user_exists)
+
+    # token is only for already user for the testing api purpose
+    def test_create_token_for_user(self):
+        ''' Test that a token is created for the user '''
+        payload = {
+            "email": 'test123@gmail.com',
+            "password": 'testpass',
+            "name": 'Test'
+        }
+
+        create_user(**payload)
+        res = self.client.POST(TOKEN_URL, payload)
+
+        # then we expect the resposnse includes a token
+        self.assertIn('token', res.data)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+    def test_create_token_invalid_credentials(self):
+        ''' Test that token is not created if invalid credentials are given '''
+        # firstly created a valid user
+        create_user(email='test123@gmail.com', password='testpass', name='Test')
+
+        # then created token with wrong credentials
+        payload = {
+            "email": 'test123@gmail.com',
+            "password": 'wrong',
+            "name": 'Test'
+        }
+        res = self.client.POST(TOKEN_URL, payload)
+        
+        self.assertNotIn('token', res.data)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_dont_create_token_no_user(self):
+        ''' Test that token is not created if user is not existed '''
+        payload = {
+            "email": 'test123@gmail.com',
+            "password": 'testpass',
+            "name": 'Test'
+        }
+        res = self.client.POST(TOKEN_URL, payload)
+        
+        self.assertNotIn('token', res.data)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_create_token_missing_field(self):
+        ''' test that email and password are required '''
+        res = self.client.POST(TOKEN_URL, {"email": 'test123@gmail.com', "password": ''})
+        self.assertNotIn('token', res.data)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+
